@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ScrollPaneLayout;
 
 public class AWTTest extends Frame {
 
@@ -21,28 +22,16 @@ public class AWTTest extends Frame {
         setTitle(this.frameInitialTitle);
         setSize(this.frameWidth, this.frameHeight);
 
-        Panel panelWest = new Panel();
-        panelWest.setLayout(new BoxLayout(panelWest, BoxLayout.Y_AXIS));
-        inventoryPanels[0] = panelWest;
-        add(inventoryPanels[0], BorderLayout.WEST);
+        // Panel to contain inventory items
+        Panel inventoryPanel = new Panel();
+        add(inventoryPanel, BorderLayout.CENTER);
 
-        Panel panelCenter = new Panel();
-        panelCenter.setLayout(new BoxLayout(panelCenter, BoxLayout.Y_AXIS));
-        inventoryPanels[1] = panelCenter;
-        add(inventoryPanels[1], BorderLayout.CENTER);
-        
-        Panel panelEast = new Panel();
-        panelEast.setLayout(new BoxLayout(panelEast, BoxLayout.Y_AXIS));
-        inventoryPanels[2] = panelEast;
-        add(inventoryPanels[2], BorderLayout.EAST);
-
-        // Align text to left and allow text box to stretch.
+        // Input box for new items 
         Panel inputPanel = new Panel(new BorderLayout());
         inputPanel.add(new Label("Add New Item: "), BorderLayout.WEST);
-        itemInput = new TextField(25);
+        itemInput = new TextField();
         itemInput.addActionListener(new ItemInputListener());
         inputPanel.add(itemInput, BorderLayout.CENTER);
-
         add(inputPanel, BorderLayout.SOUTH);
 
         setVisible(true);
@@ -57,13 +46,12 @@ public class AWTTest extends Frame {
         public void actionPerformed(ActionEvent e) {
             String itemName = itemInput.getText();
             itemInput.setText("");
-            // Check if the item already exists
+            // Check if the item name exists
             if (!inventory.stream().anyMatch(item -> item.getName().equals(itemName))) {
-                inventory.add(new InventoryItem(itemName, 0));
-                //TODO REMOVE
-                inventoryPanels[0].add(new Label("0"));
-                inventoryPanels[1].add(new Label(itemName));
-                System.out.println(itemName);
+                InventoryItem newItem = new InventoryItem(itemName);
+                inventory.add(newItem);
+                // TODO: Handle different organisation schemes for names or quantity
+
                 revalidate();
             }
         }
@@ -88,32 +76,78 @@ public class AWTTest extends Frame {
     private class InventoryItem {
 
         private String name;
-        private int quantity;
+        private int quantity = 0;
 
-        public InventoryItem(String name, int quantity) {
+        private Panel panelRep = null;
+        private TextField quantityField;
+        private TextField nameField;
+
+        public InventoryItem(String name) {
             this.name = name;
-            this.quantity = quantity;
         }
 
         public String getName() {
             return name;
         }
 
-        public int getQuantity() {
-            return quantity;
+        public Panel getPanelRep() {
+            // Generate a panel representation if it does not exist
+            if (panelRep == null) {
+                panelRep = new Panel(new BoxLayout(panelRep, BoxLayout.X_AXIS));
+
+                // Editable field for quantity
+                quantityField = new TextField();
+                quantityField.addActionListener(new QuantityFieldListener());
+                // Editable field for name
+                nameField = new TextField();
+                nameField.addActionListener(new NameFieldListener());
+                // Various buttons
+                Button incButton = new Button("+");
+                incButton.addActionListener(new IncrementListener());
+                Button decButton = new Button("-");
+                decButton.addActionListener(new DecrementListener());
+                Button remButton = new Button("x");
+                remButton.addActionListener(new RemoveListener());
+
+                // Add generated elements to the panel
+                panelRep.add(quantityField);
+                panelRep.add(nameField);
+                panelRep.add(Box.createVerticalGlue());
+                panelRep.add(incButton);
+                panelRep.add(decButton);
+                panelRep.add(remButton);
+            }
+
+            return panelRep;
+        }
+
+        private class QuantityFieldListener implements ActionListener {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO Auto-generated method stub
+                
+            }
+        }
+
+        private class NameFieldListener implements ActionListener {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO Auto-generated method stub
+                
+            }
+        }
+
+        private class IncrementListener implements ActionListener {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                quantity++;
+            }
         }
 
         private class DecrementListener implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent event) {
                 if (quantity > 0) {quantity--;}
-            }
-        }
-    
-        private class IncrementListener implements ActionListener {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                quantity++;
             }
         }
 
