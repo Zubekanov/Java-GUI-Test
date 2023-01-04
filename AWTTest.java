@@ -2,33 +2,43 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ScrollPaneLayout;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 public class AWTTest extends Frame {
 
     private String frameInitialTitle = "AWTTest Frame";
-    private int frameWidth = 400;
-    private int frameHeight = 200;
+    private final int FRAME_WIDTH = 400;
+    private final int FRAME_HEIGHT = 200;
+    private final int ITEM_HEIGHT = 20;
+    private final int SCROLL_SPEED = 16;
 
     private TextField itemInput;
     private ArrayList<InventoryItem> inventory = new ArrayList<InventoryItem>();
-    private Panel[] inventoryPanels = {null, null, null};
+    private GridBagConstraints itemConstraints;
+    private JPanel inventoryPanel;
 
     public AWTTest() {
         setLayout(new BorderLayout());
         addWindowListener(new FrameListener());
         setTitle(this.frameInitialTitle);
-        setSize(this.frameWidth, this.frameHeight);
+        setSize(FRAME_WIDTH, FRAME_HEIGHT);
 
-        // Panel to contain inventory items
-        Panel inventoryPanel = new Panel();
-        add(inventoryPanel, BorderLayout.CENTER);
+        // JPanel to contain inventory items
+        inventoryPanel = new JPanel(new GridBagLayout());
+        JScrollPane scrollPane = new JScrollPane(inventoryPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(SCROLL_SPEED);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Set GridBagConstraints for inventoryPanel
+        itemConstraints = new GridBagConstraints();
+        itemConstraints.fill = GridBagConstraints.HORIZONTAL;
+        itemConstraints.weightx = 1.0;
+        itemConstraints.gridx = 0;
 
         // Input box for new items 
-        Panel inputPanel = new Panel(new BorderLayout());
-        inputPanel.add(new Label("Add New Item: "), BorderLayout.WEST);
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(new Label("New item: "), BorderLayout.WEST);
         itemInput = new TextField();
         itemInput.addActionListener(new ItemInputListener());
         inputPanel.add(itemInput, BorderLayout.CENTER);
@@ -41,17 +51,21 @@ public class AWTTest extends Frame {
         AWTTest TestFrame = new AWTTest();
     }
 
+    private boolean itemExists(String name) {
+        return inventory.stream().anyMatch(item -> item.getName().equals(name));
+    }
+
     private class ItemInputListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             String itemName = itemInput.getText();
             itemInput.setText("");
-            // Check if the item name exists
-            if (!inventory.stream().anyMatch(item -> item.getName().equals(itemName))) {
+            // Create an inventory item if it does not already exist
+            if (!itemExists(itemName)) {
                 InventoryItem newItem = new InventoryItem(itemName);
                 inventory.add(newItem);
                 // TODO: Handle different organisation schemes for names or quantity
-
+                inventoryPanel.add(newItem.getPanelRep(), itemConstraints);
                 revalidate();
             }
         }
@@ -78,7 +92,7 @@ public class AWTTest extends Frame {
         private String name;
         private int quantity = 0;
 
-        private Panel panelRep = null;
+        private JPanel JPanelRep = null;
         private TextField quantityField;
         private TextField nameField;
 
@@ -90,42 +104,52 @@ public class AWTTest extends Frame {
             return name;
         }
 
-        public Panel getPanelRep() {
-            // Generate a panel representation if it does not exist
-            if (panelRep == null) {
-                panelRep = new Panel(new BoxLayout(panelRep, BoxLayout.X_AXIS));
+        public JPanel getPanelRep() {
+            // Generate a JPanel representation if it does not exist
+            if (JPanelRep == null) {
+                JPanelRep = new JPanel(new BorderLayout());
+                JPanelRep.setPreferredSize(new Dimension(0, ITEM_HEIGHT));
 
                 // Editable field for quantity
-                quantityField = new TextField();
+                quantityField = new TextField(3);
                 quantityField.addActionListener(new QuantityFieldListener());
+                quantityField.setText(quantity + "");
                 // Editable field for name
                 nameField = new TextField();
                 nameField.addActionListener(new NameFieldListener());
+                nameField.setText(name);
                 // Various buttons
+                JPanel buttonPanel = new JPanel(new FlowLayout());
                 Button incButton = new Button("+");
                 incButton.addActionListener(new IncrementListener());
                 Button decButton = new Button("-");
                 decButton.addActionListener(new DecrementListener());
                 Button remButton = new Button("x");
                 remButton.addActionListener(new RemoveListener());
+                // Add buttons to buttonPanel
+                buttonPanel.add(incButton);
+                buttonPanel.add(decButton);
+                buttonPanel.add(remButton);
 
-                // Add generated elements to the panel
-                panelRep.add(quantityField);
-                panelRep.add(nameField);
-                panelRep.add(Box.createVerticalGlue());
-                panelRep.add(incButton);
-                panelRep.add(decButton);
-                panelRep.add(remButton);
+                // Add generated elements to the JPanel
+                JPanelRep.add(quantityField, BorderLayout.WEST);
+                JPanelRep.add(nameField, BorderLayout.CENTER);
+                JPanelRep.add(buttonPanel, BorderLayout.EAST);
             }
 
-            return panelRep;
+            return JPanelRep;
         }
 
         private class QuantityFieldListener implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO Auto-generated method stub
-                
+                try {
+                    int value = Integer.parseInt(quantityField.getText());
+                    quantity = value;
+                    quantityField.setText(quantity + "");
+                } catch (NumberFormatException nfe) {
+                    quantityField.setText(quantity + "");
+                }
             }
         }
 
@@ -141,6 +165,7 @@ public class AWTTest extends Frame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 quantity++;
+                quantityField.setText(quantity + "");
             }
         }
 
@@ -148,6 +173,7 @@ public class AWTTest extends Frame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 if (quantity > 0) {quantity--;}
+                quantityField.setText(quantity + "");
             }
         }
 
