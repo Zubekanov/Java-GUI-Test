@@ -26,7 +26,9 @@ public class AWTTest extends Frame {
 
         // JPanel to contain inventory items
         inventoryPanel = new JPanel(new GridBagLayout());
-        JScrollPane scrollPane = new JScrollPane(inventoryPanel);
+        // TODO: Find a fix for scrollpane elements disappearing
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.getViewport().add(inventoryPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(SCROLL_SPEED);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -145,7 +147,9 @@ public class AWTTest extends Frame {
             public void actionPerformed(ActionEvent event) {
                 try {
                     int value = Integer.parseInt(quantityField.getText());
-                    quantity = value;
+                    if (value >= 0) {
+                        quantity = value;
+                    }
                     quantityField.setText(quantity + "");
                 } catch (NumberFormatException nfe) {
                     quantityField.setText(quantity + "");
@@ -156,8 +160,11 @@ public class AWTTest extends Frame {
         private class NameFieldListener implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO Auto-generated method stub
-                
+                String newName = nameField.getText();
+                if (!itemExists(newName)) {
+                    name = newName;
+                } 
+                nameField.setText(name);
             }
         }
 
@@ -180,7 +187,8 @@ public class AWTTest extends Frame {
         private class RemoveListener implements ActionListener {
             @Override 
             public void actionPerformed(ActionEvent event) {
-                //  TODO
+                inventoryPanel.remove(JPanelRep);
+                revalidate();
             }
         }
     }
